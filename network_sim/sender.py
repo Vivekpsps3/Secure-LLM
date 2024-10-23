@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-from monitor import Monitor
+from network_sim import monitor
+Monitor = monitor.Monitor
 import sys
 import time
 import math
 import threading
 import queue
 import multiprocessing
+import random
 
 # Config File
 import configparser
@@ -13,7 +15,7 @@ import configparser
 #STATIC VARIABLES
 HEADER_SIZE = 8
 TIMEOUT = 1
-MAX_WINDOW_SIZE = 160
+MAX_WINDOW_SIZE = 1000
 
 def get_file_contents(file_path):
 	f = open(file_path, 'rb')
@@ -39,17 +41,20 @@ def generate_packet_list(file, max_packet_size):
 		offset += maxdata
 		seq_num += 1
 
-	# Add end-of-transmission packet
+	#randomize packet order
+	# random.shuffle(packet_list)
+
 	eot_packet = create_packet(seq_num, b'EOT')
 	packet_list.append(eot_packet)
 
 	return packet_list
 
 class Sender:
-	def __init__(self, cfg):
+	def __init__(self, cfg, config_path):
 		# Get network parameters
 		self.receiver_id = int(cfg.get('receiver', 'id'))
 		self.file_to_send = cfg.get('nodes', 'file_to_send')
+		# self.file_to_send = file_path = "network_sim/" + self.file_to_send
 		self.max_packet_size = int(cfg.get('network', 'MAX_PACKET_SIZE'))
 		self.send_monitor = Monitor(config_path, 'sender')
 		self.prop_delay = float(cfg.get('network', 'PROP_DELAY'))
@@ -297,7 +302,7 @@ if __name__ == '__main__':
 	cfg.read(config_path)
 	
 	# Create sender object
-	sender = Sender(cfg)
+	sender = Sender(cfg, config_path)
 	sender.send()
 
 

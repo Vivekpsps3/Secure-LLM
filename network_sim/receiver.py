@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-from monitor import Monitor
+from network_sim import monitor
+Monitor = monitor.Monitor
+
 import sys
 import math
 
@@ -15,9 +17,8 @@ def extract_seq_num(packet):
 def create_ack(seq_num, message='ERR'):
     return seq_num.to_bytes(HEADER_SIZE, byteorder='big') + message
 
-if __name__ == '__main__':
-	print("Receivier starting up!")
-	config_path = sys.argv[1]
+def receiver(config_path):
+	print("Receiver starting up!")
 
 	# Initialize sender monitor
 	recv_monitor = Monitor(config_path, 'receiver')
@@ -44,7 +45,7 @@ if __name__ == '__main__':
 	packet_buffer = []
 	last_seq_num = -1
 
-	while(True):
+	while(True):		
 		# Receive packet
 		addr, packet = recv_monitor.recv(max_packet_size + HEADER_SIZE)
 		seq_num = extract_seq_num(packet)
@@ -129,3 +130,6 @@ if __name__ == '__main__':
 			print(f"BIG ERROR, received packet with sequence number {seq_num}")
 		
 		
+if __name__ == "__main__":
+	config_path = sys.argv[1]
+	receiver(config_path)
