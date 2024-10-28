@@ -12,18 +12,20 @@ from network_sim import sender as sender
 from network_sim import receiver as receiver
 import multiprocessing
 import base64
-
+import binascii
+import time
 
 
 file_to_send = "network_sim/encrypted.txt"
 file_to_recv = "./received.txt"
-# Load the config file
-config_path = "network_sim/config.ini"
-cfg = configparser.RawConfigParser(allow_no_value=True)
-cfg.read(config_path)
 
-# Create the sender object
-sender = sender.Sender(cfg, config_path)
+#hex encoding
+def hex_encode(data):
+    return binascii.hexlify(data).decode()
+
+#hex decoding
+def hex_decode(data):
+    return binascii.unhexlify(data)
 
 # --- Diffie-Hellman Functions ---
 def dh_generate_keypair(p, g):
@@ -65,24 +67,9 @@ def aes_decrypt(key, ciphertext):
 
 
 # --- Communication Functions ---
-def send_data():
-    sender.send()
-
-def receive_data():
-    receiver.receiver(config_path)
-
 def one_exchange():
-    # Create processes for sending and receiving
-    sender_process = multiprocessing.Process(target=send_data)
-    receiver_process = multiprocessing.Process(target=receive_data)
-
-    # Start the processes
-    sender_process.start()
-    receiver_process.start()
-
-    # Wait for both processes to complete
-    sender_process.join()
-    receiver_process.join()
+    os.system("make exchange")
+    return
 
 # --- RSA Digital Signature Functions ---
 def sign_message(private_key, message):
@@ -92,11 +79,11 @@ def sign_message(private_key, message):
 
 def verify_signature(public_key, message, signature):
     hash_obj = SHA256.new(message)
-    try:
-        pkcs1_15.new(public_key).verify(hash_obj, signature)
-        return True
-    except (ValueError, TypeError):
-        return False
+    # try:
+    pkcs1_15.new(public_key).verify(hash_obj, signature)
+    return True
+    # except (ValueError, TypeError):
+    #     return False
 
 # --- TLS Handshake Simulation ---
 def load_rsa_keys(priv_path, pub_path):
@@ -135,26 +122,30 @@ def tls_handshake(p, g):
     server_public_received, server_signature_received = read_message()
     if not verify_signature(server_pub, str(server_public_received).encode(), server_signature_received):
         raise ValueError("Server's signature verification failed")
-    
+
     shared_secret_client = dh_compute_shared_secret(server_public_received, client_private, p)
     assert shared_secret == shared_secret_client, "Shared secrets do not match"
     
     aes_key = derive_aes_key(shared_secret)
+
     return aes_key
 
 # --- Message Read/Write Functions ---
 def write_message(dh_public, signature):
     message = dh_public.to_bytes(256) + signature
-    encoded_message = base64.b64encode(message)
+    encoded_message = bytes(hex_encode(message), 'utf-8')
     with open(file_to_send, 'wb') as f:
         f.write(encoded_message)
+        f.close()
+    
 
-    # one_exchange()  # Simulate network exchange
+    one_exchange()  # Simulate network exchange
 
 def read_message():
-    with open(file_to_send, 'rb') as f:
+    with open(file_to_recv, 'rb') as f:
         encoded_data = f.read()
-        data = base64.b64decode(encoded_data)
+        encoded_data = encoded_data.decode('utf-8')
+        data = hex_decode(encoded_data)
         dh_public = int.from_bytes(data[:256])
         signature = data[256:]
     return dh_public, signature
@@ -163,19 +154,25 @@ def read_message():
 def secure_communication(aes_key, prompt):
     # Encrypt prompt using AES
     encrypted_message = aes_encrypt(aes_key, prompt)
+    # Encode message to hex
+    encrypted_message = hex_encode(encrypted_message)
+    encrypted_message = bytes(encrypted_message, 'utf-8')
     with open(file_to_send, 'wb') as f:
         f.write(encrypted_message)
     
-    # one_exchange()  # Simulate network exchange
+    one_exchange()  # Simulate network exchange
 
     # Read and decrypt response
-    with open(file_to_send, 'rb') as f:
+    with open(file_to_recv, 'rb') as f:
         encrypted_response = f.read()
+        encrypted_response = encrypted_response.decode('utf-8')
+        encrypted_response = hex_decode(encrypted_response)
     response = aes_decrypt(aes_key, encrypted_response)
     return response
 
 # Main Execution
 if __name__ == "__main__":
+
     p = 23  # Prime number
     g = 5   # Primitive root mod 23
     
@@ -183,6 +180,12 @@ if __name__ == "__main__":
     aes_key = tls_handshake(p, g)
 
     # Example secure communication using AES-encrypted message
-    prompt = "Your prompt here."
-    response = secure_communication(aes_key, prompt)
-    print("Received response:", response)
+    prompt = "What is the meaning of life?"
+    server_prompt = secure_communication(aes_key, prompt)
+
+    prompt_response = llm.get_completion(server_prompt)
+
+    response = secure_communication(aes_key, prompt_response)
+
+    print(response)
+

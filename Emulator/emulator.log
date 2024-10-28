@@ -1,20 +1,11 @@
-1730084853.3150914
+1730137759.253454
 Configuration File Parsed.
-1730084853.315142
+1730137759.253556
 Starting network emulator on  8000.
 
-1730084856.4852767
-Reordered Packet from ('127.0.0.1', 8001) to index 1
+1730137760.2217395
+Dropped Packet from ('127.0.0.1', 8002)
 
-1730084856.4855518
-Dropped Packet from ('127.0.0.1', 8001)
-
-1730084857.988286
-Dropped Packet from ('127.0.0.1', 8001)
-
-1730084858.315255
-Current Average Incoming Traffic: 630.7983757442336 bytes/sec
-
-1730084861.3766127
+1730137760.2287545
 Test Complete. Terminating...
 

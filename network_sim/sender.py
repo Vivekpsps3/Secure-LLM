@@ -8,6 +8,7 @@ import threading
 import queue
 import multiprocessing
 import random
+import binascii
 
 # Config File
 import configparser
@@ -36,6 +37,7 @@ def generate_packet_list(file, max_packet_size):
 	maxdata = max_packet_size - HEADER_SIZE - 4
 	while offset < len(file):
 		chunk = file[offset:offset+maxdata]
+		# chunk = binascii.hexlify(chunk)
 		packet = create_packet(seq_num, chunk)
 		packet_list.append(packet)
 		offset += maxdata
@@ -249,7 +251,7 @@ class Sender:
 					if self.final_packet_count > 5:
 						print("Sender: Retransmitting last packet too many times. Exiting.")
 						self.acknowledged = -1
-						break
+						exit()
 
 		
 		
