@@ -1,80 +1,20 @@
-1729638411.7963736
+1730084853.3150914
 Configuration File Parsed.
-1729638411.79643
+1730084853.315142
 Starting network emulator on  8000.
 
-1729638414.494501
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.5179126
-Dropped 1 packet for 2 due to full buffer.
-
-1729638414.518049
-Dropped 1 packet for 2 due to full buffer.
-
-1729638414.5813947
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.6027231
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.6080518
-Reordered Packet from ('127.0.0.1', 8001) to index 4
-
-1729638414.6081614
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.60819
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.6160245
-Dropped Packet from ('127.0.0.1', 8002)
-
-1729638414.639925
-Reordered Packet from ('127.0.0.1', 8001) to index 4
-
-1729638414.6626146
-Dropped Packet from ('127.0.0.1', 8002)
-
-1729638414.687703
-Reordered Packet from ('127.0.0.1', 8001) to index 6
-
-1729638414.6877713
-Reordered Packet from ('127.0.0.1', 8001) to index 2
-
-1729638414.6999874
-Dropped Packet from ('127.0.0.1', 8002)
-
-1729638414.7937467
+1730084856.4852767
 Reordered Packet from ('127.0.0.1', 8001) to index 1
 
-1729638414.825566
+1730084856.4855518
 Dropped Packet from ('127.0.0.1', 8001)
 
-1729638414.8361058
+1730084857.988286
 Dropped Packet from ('127.0.0.1', 8001)
 
-1729638414.878488
-Reordered Packet from ('127.0.0.1', 8001) to index 1
+1730084858.315255
+Current Average Incoming Traffic: 630.7983757442336 bytes/sec
 
-1729638414.9149811
-Dropped Packet from ('127.0.0.1', 8002)
-
-1729638414.9154592
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.9490085
-Dropped Packet from ('127.0.0.1', 8002)
-
-1729638414.9843001
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638414.993853
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638415.0468235
-Dropped Packet from ('127.0.0.1', 8001)
-
-1729638415.9512825
+1730084861.3766127
 Test Complete. Terminating...
 

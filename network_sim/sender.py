@@ -41,9 +41,6 @@ def generate_packet_list(file, max_packet_size):
 		offset += maxdata
 		seq_num += 1
 
-	#randomize packet order
-	# random.shuffle(packet_list)
-
 	eot_packet = create_packet(seq_num, b'EOT')
 	packet_list.append(eot_packet)
 
@@ -259,6 +256,7 @@ class Sender:
 	def exit(self):
 		# Exit! Make sure the receiver ends before the sender. send_end will stop the emulator.
 		self.send_monitor.send_end(self.receiver_id)
+		pass
 
 	def safe_timeout(self, MAX_SIZE):
 		# q = multiprocessing.Queue()
