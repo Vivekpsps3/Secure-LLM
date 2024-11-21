@@ -72,6 +72,71 @@ def one_exchange():
     return
 
 # --- RSA Digital Signature Functions ---
+class RingSignature:
+    def __init__(self, keys, key_size=4096):
+        self.keys = keys
+        self.key_size = key_size
+        self.num_keys = len(keys)  # Number of participants in the ring
+        self.q = 1 << (key_size - 1)  # Derived value based on key size
+
+    def sign(self, message, private_key, signer_index):
+        self._permutate_message(message)
+        signatures = [None] * self.num_keys
+        secret = randint(0, self.q)
+        john = hancock = self._hash(secret)
+        for i in range(self.num_keys):
+            idx = (signer_index + i + 1) % self.num_keys
+            if idx == signer_index:
+                signatures[signer_index] = self._modular_exponentiation(hancock ^ secret, private_key.d, private_key.n)
+            else:
+                signatures[idx] = randint(0, self.q)
+                e = self._modular_exponentiation(signatures[idx], self.keys[idx].e, self.keys[idx].n)
+                hancock = self._hash(hancock ^ e)
+            if (idx + 1) % self.num_keys == 0 and idx != signer_index:
+                john = hancock
+        return [john] + signatures
+
+    def verify(self, message, ring_signature):
+        self._permutate_message(message)
+
+        partials = []
+        for i in range(len(ring_signature) - 1):
+            computed_hash = self._modular_exponentiation(
+                ring_signature[i + 1], self.keys[i].e, self.keys[i].n
+            )
+            partials.append(computed_hash)
+
+        result = ring_signature[0]
+        for i in range(self.num_keys):
+            result = self._hash(result ^ partials[i])
+        return result == ring_signature[0]
+
+    def _permutate_message(self, message):
+        self.p = int(SHA256.new(message.encode()).hexdigest(), 16)
+
+    def _hash(self, x):
+        msg = f'{x}{self.p}'
+        return int(SHA256.new(msg.encode()).hexdigest(), 16)
+
+    def _modular_exponentiation(self, base, exp, mod):
+        result = 1
+        base = base % mod
+        while exp > 0:
+            if (exp % 2) == 1:
+                result = (result * base) % mod
+            exp = exp >> 1
+            base = (base * base) % mod
+        return result
+
+def load_public_keys(num_clients):
+  public_keys = []
+  for i in range(1, num_clients + 1):
+    filename = f"client{i}.pub"
+    with open(filename, 'rb') as f:
+      public_key = RSA.import_key(f.read())
+    public_keys.append(public_key)
+  return public_keys
+
 def sign_message(private_key, message):
     hash_obj = SHA256.new(message)
     signature = pkcs1_15.new(private_key).sign(hash_obj)
@@ -101,14 +166,19 @@ def tls_handshake(p, g):
     # Client generates DH key pair
     client_private, client_public = dh_generate_keypair(p, g)
 
+    public_keys = load_public_keys(3)
+
+    ring = RingSignature(public_keys)
+
     # Client signs the DH public key and sends it
-    client_signature = sign_message(client_priv, str(client_public).encode())
+    client_signature = ring.sign(str(client_public).encode(), public_keys.index(client_priv.public_key()))
+
     write_message(client_public, client_signature)
 
     # Server reads the message, verifies signature, and generates its own DH key pair
     client_public_received, client_signature_received = read_message()
 
-    if not verify_signature(client_pub, str(client_public_received).encode(), client_signature_received):
+    if not ring.verify(str(client_public_received).encode(), client_signature_received):
         raise ValueError("Client's signature verification failed")
 
     server_private, server_public = dh_generate_keypair(p, g)
