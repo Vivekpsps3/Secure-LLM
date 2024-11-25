@@ -15,7 +15,7 @@ import base64
 import binascii
 import time
 
-
+num_clients = 3
 file_to_send = "network_sim/encrypted.txt"
 file_to_recv = "./received.txt"
 
@@ -160,25 +160,25 @@ def load_rsa_keys(priv_path, pub_path):
 
 def tls_handshake(p, g):
     # Load RSA keys
-    client_priv, client_pub = load_rsa_keys("client.priv", "client.pub")
+    client_priv, client_pub = load_rsa_keys("client1.priv", "client1.pub")
     server_priv, server_pub = load_rsa_keys("server.priv", "server.pub")
 
     # Client generates DH key pair
     client_private, client_public = dh_generate_keypair(p, g)
 
-    public_keys = load_public_keys(3)
+    public_keys = load_public_keys(num_clients)
 
     ring = RingSignature(public_keys)
 
     # Client signs the DH public key and sends it
-    client_signature = ring.sign(str(client_public).encode(), public_keys.index(client_priv.public_key()))
+    client_signature = ring.sign(str(client_public), cleint_priv, public_keys.index(client_priv.public_key()))
 
     write_message(client_public, client_signature)
 
     # Server reads the message, verifies signature, and generates its own DH key pair
     client_public_received, client_signature_received = read_message()
 
-    if not ring.verify(str(client_public_received).encode(), client_signature_received):
+    if not ring.verify(str(client_public_received), client_signature_received):
         raise ValueError("Client's signature verification failed")
 
     server_private, server_public = dh_generate_keypair(p, g)
