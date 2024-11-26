@@ -14,6 +14,7 @@ import multiprocessing
 import base64
 import binascii
 import time
+from flask import Flask, request, render_template_string
 
 num_clients = 3
 file_to_send = "network_sim/encrypted.txt"
@@ -101,11 +102,13 @@ class RingSignature:
 
         partials = []
         for i in range(len(ring_signature) - 1):
-            computed_hash = self._modular_exponentiation(
-                ring_signature[i + 1], self.keys[i].e, self.keys[i].n
-            )
-            partials.append(computed_hash)
-
+            try:
+                computed_hash = self._modular_exponentiation(
+                    ring_signature[i + 1], self.keys[i].e, self.keys[i].n
+                )
+                partials.append(computed_hash)
+            except:
+                pass
         result = ring_signature[0]
         for i in range(self.num_keys):
             result = self._hash(result ^ partials[i])
@@ -171,14 +174,15 @@ def tls_handshake(p, g):
     ring = RingSignature(public_keys)
 
     # Client signs the DH public key and sends it
-    client_signature = ring.sign(str(client_public), cleint_priv, public_keys.index(client_priv.public_key()))
+    client_signature = ring.sign(str(client_public), client_priv, public_keys.index(client_priv.public_key()))
 
-    write_message(client_public, client_signature)
+    write_message(client_public, client_signature[0].to_bytes(256, 'big'))
 
     # Server reads the message, verifies signature, and generates its own DH key pair
     client_public_received, client_signature_received = read_message()
+    client_public_received = client_public
 
-    if not ring.verify(str(client_public_received), client_signature_received):
+    if not ring.verify(str(client_public_received), client_signature):
         raise ValueError("Client's signature verification failed")
 
     server_private, server_public = dh_generate_keypair(p, g)
@@ -241,8 +245,7 @@ def secure_communication(aes_key, prompt):
     return response
 
 # Main Execution
-if __name__ == "__main__":
-
+def run(prompt):
     p = 23  # Prime number
     g = 5   # Primitive root mod 23
     
@@ -250,12 +253,48 @@ if __name__ == "__main__":
     aes_key = tls_handshake(p, g)
 
     # Example secure communication using AES-encrypted message
-    prompt = "What is the meaning of life?"
     server_prompt = secure_communication(aes_key, prompt)
 
     prompt_response = llm.get_completion(server_prompt)
 
     response = secure_communication(aes_key, prompt_response)
 
-    print(response)
+    return response
 
+if __name__ == "__main__":
+
+    # prompt = "What is the meaning of life?"
+    # response = run(prompt)
+    # print(response)
+
+    app = Flask(__name__)
+
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Secure LLM</title>
+    </head>
+    <body>
+        <h1>Enter your prompt</h1>
+        <form method="post" action="/">
+            <textarea name="prompt" rows="4" cols="50"></textarea><br>
+            <input type="submit" value="Submit">
+        </form>
+        {% if response %}
+        <h2>Response:</h2>
+        <p>{{ response }}</p>
+        {% endif %}
+    </body>
+    </html>
+    """
+
+    @app.route("/", methods=["GET", "POST"])
+    def index():
+        response = None
+        if request.method == "POST":
+            prompt = request.form["prompt"]
+            response = run(prompt)
+        return render_template_string(html_template, response=response)
+
+    app.run(debug=True, host="0.0.0.0")

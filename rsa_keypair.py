@@ -12,7 +12,7 @@ with open("server.priv", "wb") as f:
 with open("server.pub", "wb") as f:
     f.write(key.publickey().export_key())
 
-clients = 3
+clients = 4
 if len(sys.argv) > 1:
     clients = int(sys.argv[1])
 for i in range(clients):
