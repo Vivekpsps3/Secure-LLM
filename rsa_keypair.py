@@ -13,10 +13,10 @@ with open("server.pub", "wb") as f:
     f.write(key.publickey().export_key())
 
 # Save the private for the client
-with open("client.priv", "wb") as f:
+with open("client1.priv", "wb") as f:
     f.write(key2.export_key())
 
 # Save the public key for the client
-with open("client.pub", "wb") as f:
+with open("client1.pub", "wb") as f:
     f.write(key2.publickey().export_key())
 
